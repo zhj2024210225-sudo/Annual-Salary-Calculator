@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>薪资计算器</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">SALARY COMPANION</p>
+        <h1>薪资计算器</h1>
+        <p class="subtitle">算清税前构成、五险一金、个税，以及现金与公积金账户的真实收入。</p>
+      </div>
+      <div class="header-actions"><button id="showQrBtn" class="ghost-btn" type="button">微信扫码使用</button><button id="resetBtn" class="ghost-btn" type="button">恢复默认</button></div>
+    </header>
+
+    <section class="summary-grid" aria-label="计算结果摘要">
+      <article class="summary-card main-result"><span>年薪</span><strong id="annualSalary">¥0</strong><small>全年现金到手 + 公积金账户</small></article>
+      <article class="summary-card"><span>到手现金</span><strong id="annualCashTop">¥0</strong><small>预计全年税后现金</small></article>
+      <article class="summary-card"><span>本年公积金</span><strong id="annualFundTop">¥0</strong><small>个人 + 单位全年缴存</small></article>
+      <article class="summary-card"><span>税前总收入</span><strong id="annualGross">¥0</strong><small>全年月薪、加班与年终奖</small></article>
+    </section>
+
+    <div class="layout">
+      <form id="salaryForm" class="calculator" autocomplete="off">
+        <section class="panel">
+          <div class="panel-title"><span class="step">01</span><div><h2>薪资与工作时间</h2><p>填写合同或实际发放口径</p></div></div>
+          <div class="field-grid">
+            <label>基本月薪 <div class="input-wrap"><span>¥</span><input id="baseSalary" type="number" min="0" value="12000" /></div></label>
+            <label>月度绩效 <div class="input-wrap"><span>¥</span><input id="performance" type="number" min="0" value="3000" /></div></label>
+            <label>每天工作时长 <div class="input-wrap"><input id="dailyHours" type="number" min="1" max="24" step="0.5" value="8" /><span>小时</span></div></label>
+            <label>标准月计薪天数 <div class="input-wrap"><input id="workDays" type="number" min="1" max="31" step="0.25" value="21.75" /><span>天</span></div></label>
+          </div>
+          <div class="hourly-strip"><span>参考时薪（按基本月薪）</span><b id="hourlyRate">¥0 / 小时</b><span class="hint">月薪 ÷ 计薪天数 ÷ 每天工时</span></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span class="step">02</span><div><h2>加班与年终奖</h2><p>按常见法定倍率估算，可灵活调整</p></div></div>
+          <div class="subheading">加班</div>
+          <div class="field-grid overtime-grid">
+            <label>每月工作日加班时长 <div class="input-wrap"><input id="weekdayOT" type="number" min="0" step="0.5" value="0" /><span>小时</span></div></label>
+            <label>工作日薪资倍率 <div class="input-wrap"><input id="weekdayMultiplier" type="number" min="0" step="0.1" value="1.5" /><span>倍</span></div></label>
+            <label>每月周末加班时长 <div class="input-wrap"><input id="weekendOT" type="number" min="0" step="0.5" value="0" /><span>小时</span></div></label>
+            <label>周末薪资倍率 <div class="input-wrap"><input id="weekendMultiplier" type="number" min="0" step="0.1" value="2" /><span>倍</span></div></label>
+            <label>周末处理方式 <select id="weekendMode"><option value="pay">支付加班工资（2倍）</option><option value="leave">安排调休（不计工资）</option></select></label>
+            <label>加班计算基数 <select id="overtimeBase"><option value="base">仅基本月薪</option><option value="basePerformance">基本月薪 + 绩效</option></select></label>
+          </div>
+          <div class="notice" id="overtimeNotice">工作日加班按 1.5 倍、周末支付加班按 2 倍时薪估算。</div>
+          <div class="subheading bonus-title">年终奖</div>
+          <div class="field-grid">
+            <label>年终奖月数 <div class="input-wrap"><input id="bonusMonths" type="number" min="0" step="0.1" value="0" /><span>个月</span></div></label>
+            <label>年终奖基数 <select id="bonusBase"><option value="base">按基本月薪</option><option value="basePerformance">基本月薪 + 绩效</option><option value="basePerformanceOvertime">基本月薪 + 绩效 + 加班</option></select></label>
+            <label>本月发放年终奖 <select id="bonusPaid"><option value="no">否（仅展示预计）</option><option value="yes">是（计入本月）</option></select></label>
+            <label>奖金计税方式 <select id="bonusTaxMethod"><option value="separate">单独计税（常用估算）</option><option value="aggregate">并入综合所得</option></select></label>
+          </div>
+          <div class="bonus-preview">预计年终奖：<b id="bonusAmount">¥0</b> <span id="bonusStatus">（未计入本月收入）</span></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span class="step">03</span><div><h2>城市与五险一金</h2><p>城市预设为示例比例；请按单位实际缴纳口径核对</p></div></div>
+          <div class="field-grid">
+            <label>所在城市 <select id="city"></select></label>
+            <label>公积金基数口径 <select id="fundBasis"><option value="base">基本月薪</option><option value="basePerformance">基本月薪 + 绩效</option><option value="basePerformanceOvertime">基本月薪 + 绩效 + 加班</option></select></label>
+            <label>公积金实际缴存基数 <div class="input-wrap readonly"><span>¥</span><input id="fundBase" type="number" readonly value="12000" /></div></label>
+          </div>
+          <div class="city-cap" id="cityCap">正在载入城市缴费规则…</div>
+          <div class="deduction-options">
+            <div class="subheading">专项附加扣除（按月）</div>
+            <label class="check-item"><input id="childDeduction" type="checkbox" /> 子女教育 / 婴幼儿照护 <span>¥2,000</span></label>
+            <label class="check-item"><input id="educationDeduction" type="checkbox" /> 继续教育 <span>¥400</span></label>
+            <label class="check-item"><input id="housingLoanDeduction" type="checkbox" /> 首套住房贷款利息 <span>¥1,000</span></label>
+            <label class="check-item"><input id="housingRentDeduction" type="checkbox" /> 住房租金 <span id="rentDeductionAmount">¥1,500</span></label>
+            <label class="check-item"><input id="elderDeduction" type="checkbox" /> 赡养老人 <span>¥3,000</span></label>
+          </div>
+          <div class="rates">
+            <div class="rate-head"><span>个人缴费比例</span><button id="rateToggle" type="button">展开 / 修改比例</button></div>
+            <div id="rateFields" class="rate-fields hidden">
+              <label>养老 <div class="percent-input"><input id="pensionRate" type="number" min="0" max="100" step="0.1" value="8" /><span>%</span></div></label>
+              <label>医疗 <div class="percent-input"><input id="medicalRate" type="number" min="0" max="100" step="0.1" value="2" /><span>%</span></div></label>
+              <label>失业 <div class="percent-input"><input id="unemploymentRate" type="number" min="0" max="100" step="0.1" value="0.5" /><span>%</span></div></label>
+              <label>公积金 <div class="percent-input"><input id="fundRate" type="number" min="0" max="100" step="0.1" value="12" /><span>%</span></div></label>
+              <label>单位公积金 <div class="percent-input"><input id="employerFundRate" type="number" min="0" max="100" step="0.1" value="12" /><span>%</span></div></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title"><span class="step">04</span><div><h2>其他收入与权益</h2><p>记录签字费、一次性奖金及股票期权等补充收入</p></div></div>
+          <div class="field-grid">
+            <label>本年一次性现金收入 <div class="input-wrap"><span>¥</span><input id="otherCash" type="number" min="0" value="0" /></div><small class="field-help">如签字费、项目奖、补贴等；计入全年税前和现金估算</small></label>
+            <label>本年股票期权 / 隐性权益估值 <div class="input-wrap"><span>¥</span><input id="equityIncome" type="number" min="0" value="0" /></div><small class="field-help">如期权、限制性股票、虚拟股等；计入年薪总权益，不计作即时现金</small></label>
+          </div>
+          <div class="notice">股票期权等通常在行权、归属或出售时才产生实际税务影响；此处仅作为年度权益估值记录。</div>
+        </section>
+      </form>
+
+      <aside class="results panel">
+        <div class="panel-title"><span class="step">✓</span><div><h2>本月明细</h2><p>基于当前输入实时更新</p></div></div>
+        <div class="breakdown">
+          <div><span>固定月薪</span><b id="fixedPay">¥0</b></div><div><span>加班工资</span><b id="otPay">¥0</b></div><div><span>当月年终奖</span><b id="paidBonus">¥0</b></div>
+          <div class="subtotal"><span>税前收入</span><b id="breakdownGross">¥0</b></div>
+          <div><span>养老保险</span><b id="pension">− ¥0</b></div><div><span>医疗保险</span><b id="medical">− ¥0</b></div><div><span>失业保险</span><b id="unemployment">− ¥0</b></div><div><span>住房公积金（个人）</span><b id="personalFund">− ¥0</b></div><div><span>个人所得税</span><b id="incomeTax">− ¥0</b></div>
+          <div class="total-line"><span>现金到手</span><b id="breakdownCash">¥0</b></div>
+        </div>
+        <div class="fund-box"><span>公积金账户本月增加</span><strong id="fundBoxValue">¥0</strong><small>个人 ¥<i id="fundPersonalNum">0</i> + 单位 ¥<i id="fundEmployerNum">0</i></small></div>
+        <div class="annual-box"><span>本月现金到手</span><strong id="cashTakeHomeBottom">¥0</strong><small>税前收入 − 五险一金 − 个税</small></div>
+        <div class="tax-note"><b>计算说明</b><p>个税按每月 5,000 元基本减除费用、综合所得七级累进税率估算；未纳入年度累计预扣、个税专项扣除细项和城市缴费上下限。</p></div>
+      </aside>
+    </div>
+  </main>
+  <div id="qrModal" class="qr-modal" aria-hidden="true">
+    <div class="qr-card" role="dialog" aria-modal="true" aria-label="微信扫码使用">
+      <button id="closeQrBtn" class="close-qr" type="button" aria-label="关闭">×</button>
+      <p class="eyebrow">WECHAT ACCESS</p>
+      <h2>微信扫码使用</h2>
+      <img id="qrImage" alt="薪资计算器二维码" />
+      <p id="qrStatus">二维码每小时自动更新</p>
+      <small id="qrHint"></small>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
